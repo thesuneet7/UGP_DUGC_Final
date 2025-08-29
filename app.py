@@ -50,6 +50,25 @@ def get_molecule_xyz(molecule_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# --- API Endpoint to Get Molecule Details ---
+@app.route('/api/molecule/<int:molecule_id>/details')
+def get_molecule_details(molecule_id):
+    """Fetches detailed information about a molecule including formula and weight."""
+    conn = get_db_connection()
+    # Gets all relevant molecule details
+    molecule = conn.execute('''
+        SELECT molecule_id, molecule_name, pubchem_cid, molecular_formula, 
+               molecular_weight, free_energy, created_date 
+        FROM molecules WHERE molecule_id = ?
+    ''', (molecule_id,)).fetchone()
+    conn.close()
+    
+    if molecule is None:
+        return jsonify({"error": "Molecule not found"}), 404
+    
+    # Convert the database row to a dictionary and return as JSON
+    return jsonify(dict(molecule))
+
 # --- Main Route to Render the HTML Page ---
 @app.route('/')
 def index():
