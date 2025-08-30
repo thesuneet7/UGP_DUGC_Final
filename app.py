@@ -58,7 +58,7 @@ def get_molecule_details(molecule_id):
     # Gets all relevant molecule details
     molecule = conn.execute('''
         SELECT molecule_id, molecule_name, pubchem_cid, molecular_formula, 
-               molecular_weight, free_energy, created_date 
+               molecular_weight, free_energy 
         FROM molecules WHERE molecule_id = ?
     ''', (molecule_id,)).fetchone()
     conn.close()
