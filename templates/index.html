@@ -28,7 +28,6 @@
       </div>
 
       <div class="flex-1 flex gap-6">
-        <!-- LEFT: Graph -->
         <div class="w-3/5 flex flex-col">
           <h3 class="text-lg font-semibold text-gray-900 mb-3 text-center">Free Energy Scatter (ID vs ΔG)</h3>
           <div class="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
@@ -36,7 +35,6 @@
           </div>
         </div>
 
-        <!-- RIGHT: Controls + JSmol + Details -->
         <div class="w-2/5 flex flex-col">
           <div class="mb-4 flex flex-col items-center">
             <label for="molecule-select" class="block text-sm font-medium text-gray-700 mb-2">Choose a Molecule:</label>
@@ -172,83 +170,95 @@
       }
 
       // Initialize scatter chart (uses /api/molecules/chart)
-async function initChart() {
-  try {
-    const resp = await fetch('/api/molecules/chart');
-    const data = await resp.json();
+      async function initChart() {
+        try {
+          const resp = await fetch('/api/molecules/chart');
+          const data = await resp.json();
 
-    chart = new Chart(chartCtx, {
-      type: 'scatter',
-      data: {
-        datasets: [{
-          label: 'Molecules',
-          data: data.map(m => ({
-            x: m.molecule_id,
-            y: m.free_energy,
-            name: m.molecule_name,
-            formula: m.molecular_formula
-          })),
-          backgroundColor: 'rgba(59, 130, 246, 0.7)'
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          x: {
-            type: 'linear',
-            title: {
-              display: true,
-              text: 'Molecule ID'
+          chart = new Chart(chartCtx, {
+            type: 'scatter',
+            data: {
+              datasets: [{
+                label: 'Molecules',
+                data: data.map(m => ({
+                  x: m.molecule_id,
+                  y: m.free_energy,
+                  name: m.molecule_name,
+                  formula: m.molecular_formula
+                })),
+                backgroundColor: 'rgba(59, 130, 246, 0.7)'
+              }]
             },
-            ticks: {
-              autoSkip: false
-            }
-          },
-          y: {
-            title: {
-              display: true,
-              text: 'Free Energy (kcal/mol)'
-            }
-          }
-        },
-        plugins: {
-          tooltip: {
-            callbacks: {
-              label: (context) => {
-                const d = context.raw;
-                const energy = (typeof d.y === 'number') ? d.y.toFixed(6) : d.y;
-                return `ID ${d.x} • ΔG: ${energy} • ${d.formula} — ${d.name}`;
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              scales: {
+                x: {
+                  type: 'linear',
+                  title: {
+                    display: true,
+                    text: 'Molecule ID'
+                  },
+                  ticks: {
+                    autoSkip: false
+                  }
+                },
+                y: {
+                  title: {
+                    display: true,
+                    text: 'Free Energy (kcal/mol)'
+                  }
+                }
+              },
+              plugins: {
+                tooltip: {
+                  callbacks: {
+                    label: (context) => {
+                      const d = context.raw;
+                      const energy = (typeof d.y === 'number') ? d.y.toFixed(6) : d.y;
+                      return `ID ${d.x} • ΔG: ${energy} • ${d.formula} — ${d.name}`;
+                    }
+                  }
+                },
+                legend: {
+                  display: false
+                },
+                zoom: {
+                  pan: {
+                    enabled: true,
+                    mode: 'xy',
+                  },
+                  zoom: {
+                    wheel: {
+                      enabled: true
+                    },
+                    pinch: {
+                      enabled: true
+                    },
+                    mode: 'xy',
+                  }
+                }
+              },
+              // The new onClick handler to connect the chart to the dropdown.
+              onClick: (e) => {
+                const points = chart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, true);
+                if (points.length) {
+                  const firstPoint = points[0];
+                  const dataIndex = firstPoint.index;
+                  const moleculeData = chart.data.datasets[0].data[dataIndex];
+                  const moleculeId = moleculeData.x;
+                  
+                  // Update dropdown and load molecule
+                  selectElement.value = moleculeId;
+                  loadMolecule(moleculeId);
+                }
               }
             }
-          },
-          legend: {
-            display: false
-          },
-          // 💡 The zoom plugin configuration is now correctly placed inside the plugins object.
-          zoom: {
-            pan: {
-              enabled: true,
-              mode: 'xy', // Pan along both x and y axes
-            },
-            zoom: {
-              wheel: {
-                enabled: true
-              }, // Zoom with mouse wheel
-              pinch: {
-                enabled: true
-              }, // Zoom with pinch gestures on mobile
-              mode: 'xy', // Zoom on both axes
-            }
-          }
+          });
+        } catch (e) {
+          console.error('Error initializing chart:', e);
         }
       }
-    });
-  } catch (e) {
-    console.error('Error initializing chart:', e);
-  }
-}
-
 
       // Boot
       populateDropdown();
