@@ -69,6 +69,20 @@ def get_molecule_details(molecule_id):
     # Convert the database row to a dictionary and return as JSON
     return jsonify(dict(molecule))
 
+# --- API Endpoint to Get Chart Data ---
+@app.route('/api/molecules/chart')
+def get_molecule_chart_data():
+    """Fetches all molecules with their ID, free energy, formula, and name for plotting."""
+    conn = get_db_connection()
+    molecules = conn.execute('''
+        SELECT molecule_id, free_energy, molecular_formula, molecule_name
+        FROM molecules
+        ORDER BY molecule_id
+    ''').fetchall()
+    conn.close()
+    
+    return jsonify([dict(row) for row in molecules])
+
 # --- Main Route to Render the HTML Page ---
 @app.route('/')
 def index():

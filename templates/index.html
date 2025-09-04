@@ -1,179 +1,259 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive 3D Molecule Viewer</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <script type="text/javascript" src="https://chemapps.stolaf.edu/jmol/jsmol/JSmol.min.js"></script>
-    
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        /* JSmol creates a container, so we style the parent */
-        #viewer-container {
-            width: 100%;
-            height: 100%;
-            position: relative;
-            min-height: 400px;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Interactive 3D Molecule Viewer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script type="text/javascript" src="https://chemapps.stolaf.edu/jmol/jsmol/JSmol.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    #viewer-container {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      min-height: 400px;
+    }
+  </style>
 </head>
 <body class="bg-gray-100 text-gray-800 flex justify-center min-h-screen">
+  <div class="p-4 md:p-8 w-full">
+    <div class="bg-white rounded-xl shadow-lg p-6 md:p-8 flex flex-col min-h-screen pb-16">
+      
+      <div class="text-center mb-6">
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Interactive 3D Molecule Viewer</h1>
+        <p class="text-gray-500 mt-2">Select a molecule to visualize its 3D structure.</p>
+      </div>
 
-    <div class="p-4 md:p-8 w-full">
-        <div class="bg-white rounded-xl shadow-lg p-6 md:p-8 flex flex-col min-h-screen pb-16">
-            
-            <div class="text-center mb-6">
-                <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Interactive 3D Molecule Viewer</h1>
-                <p class="text-gray-500 mt-2">Select a molecule to visualize its 3D structure.</p>
-            </div>
-
-            <div class="flex-1 flex gap-6">
-                <div class="w-3/5">
-                </div>
-
-                <div class="w-2/5 flex flex-col">
-                    <div class="mb-4 flex flex-col items-center">
-                        <label for="molecule-select" class="block text-sm font-medium text-gray-700 mb-2">Choose a Molecule:</label>
-                        <select id="molecule-select" class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5">
-                            <option>Loading molecules...</option>
-                        </select>
-                    </div>
-
-                    <div id="viewer-container" class="bg-gray-900 rounded-lg border border-gray-200 shadow-inner" style="aspect-ratio: 1 / 1;">
-                        </div>
-
-                    <div id="molecule-details" class="mt-8 bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-3">Molecule Details</h3>
-                        <div id="details-content" class="text-sm text-gray-600">
-                            <p class="text-gray-500 italic">Select a molecule to view details</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
+      <div class="flex-1 flex gap-6">
+        <!-- LEFT: Graph -->
+        <div class="w-3/5 flex flex-col">
+          <h3 class="text-lg font-semibold text-gray-900 mb-3 text-center">Free Energy Scatter (ID vs ΔG)</h3>
+          <div class="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+            <canvas id="moleculeChart" class="w-full" style="min-height:420px;"></canvas>
+          </div>
         </div>
+
+        <!-- RIGHT: Controls + JSmol + Details -->
+        <div class="w-2/5 flex flex-col">
+          <div class="mb-4 flex flex-col items-center">
+            <label for="molecule-select" class="block text-sm font-medium text-gray-700 mb-2">Choose a Molecule:</label>
+            <select id="molecule-select" class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5">
+              <option>Loading molecules...</option>
+            </select>
+          </div>
+
+          <div id="viewer-container" class="bg-gray-900 rounded-lg border border-gray-200 shadow-inner" style="aspect-ratio: 1 / 1;">
+          </div>
+
+          <div id="molecule-details" class="mt-8 bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">Molecule Details</h3>
+            <div id="details-content" class="text-sm text-gray-600">
+              <p class="text-gray-500 italic">Select a molecule to view details</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
+  </div>
 
-    <script>
-        // JSmol requires a global info object for configuration
-        var Info = {
-            width: "100%",
-            height: "100%",
-            color: "#111827", // bg-gray-900
-            use: "HTML5",
-            j2sPath: "https://chemapps.stolaf.edu/jmol/jsmol/j2s",
-            serverURL: "https://chemapps.stolaf.edu/jmol/jsmol/php/jsmol.php",
-            disableJ2SLoadMonitor: true,
-            disableInitialConsole: true,
-            readyFunction: null 
-        };
+  <script>
+    // JSmol config
+    var Info = {
+      width: "100%",
+      height: "100%",
+      color: "#111827",
+      use: "HTML5",
+      j2sPath: "https://chemapps.stolaf.edu/jmol/jsmol/j2s",
+      serverURL: "https://chemapps.stolaf.edu/jmol/jsmol/php/jsmol.php",
+      disableJ2SLoadMonitor: true,
+      disableInitialConsole: true,
+      readyFunction: null 
+    };
 
-        // --- Main Application Logic ---
-        document.addEventListener('DOMContentLoaded', () => {
-            const selectElement = document.getElementById('molecule-select');
-            const viewerContainer = document.getElementById('viewer-container');
-            const detailsContent = document.getElementById('details-content');
-            let jmolApplet = null;
+    document.addEventListener('DOMContentLoaded', () => {
+      const selectElement = document.getElementById('molecule-select');
+      const viewerContainer = document.getElementById('viewer-container');
+      const detailsContent = document.getElementById('details-content');
+      const chartCtx = document.getElementById('moleculeChart').getContext('2d');
 
-            // --- Function to load a molecule into the JSmol viewer ---
-            async function loadMolecule(moleculeId) {
-                if (!moleculeId) return;
-                
-                if (jmolApplet === null) {
-                    viewerContainer.innerHTML = ""; // Clear any previous message
-                    jmolApplet = Jmol.getApplet("jmolApplet0", Info);
-                    viewerContainer.innerHTML = Jmol.getAppletHtml(jmolApplet);
-                }
+      let jmolApplet = null;
+      let chart = null;
 
-                try {
-                    const response = await fetch(`/api/molecule/${moleculeId}`);
-                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                    const xyzData = await response.text();
-                    
-                    // Wrap the xyzData variable in quotes to ensure JSmol parses it correctly as a single block of data.
-                    const scriptCommand = `load inline "${xyzData}"`;
-                    Jmol.script(jmolApplet, scriptCommand);
-                    
-                    // Load molecule details
-                    await loadMoleculeDetails(moleculeId);
-                    
-                } catch (error) {
-                    console.error('Error loading molecule:', error);
-                    viewerContainer.innerHTML = `<p class="text-red-400 text-center p-8">Failed to load molecule. See console for details.</p>`;
-                }
+      // Load molecule into JSmol
+      async function loadMolecule(moleculeId) {
+        if (!moleculeId) return;
+
+        if (jmolApplet === null) {
+          viewerContainer.innerHTML = "";
+          jmolApplet = Jmol.getApplet("jmolApplet0", Info);
+          viewerContainer.innerHTML = Jmol.getAppletHtml(jmolApplet);
+        }
+
+        try {
+          const response = await fetch(`/api/molecule/${moleculeId}`);
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+          const xyzData = await response.text();
+          const scriptCommand = `load inline "${xyzData}"`;
+          Jmol.script(jmolApplet, scriptCommand);
+          await loadMoleculeDetails(moleculeId);
+        } catch (error) {
+          console.error('Error loading molecule:', error);
+          viewerContainer.innerHTML = `<p class="text-red-400 text-center p-8">Failed to load molecule. See console for details.</p>`;
+        }
+      }
+
+      // Load molecule details panel
+      async function loadMoleculeDetails(moleculeId) {
+        try {
+          const response = await fetch(`/api/molecule/${moleculeId}/details`);
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+          const details = await response.json();
+
+          detailsContent.innerHTML = `
+            <div class="space-y-2">
+              <div class="flex justify-between">
+                <span class="font-medium text-gray-700">Name:</span>
+                <span class="text-gray-900">${details.molecule_name}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="font-medium text-gray-700">Formula:</span>
+                <span class="text-gray-900 font-mono">${details.molecular_formula || 'N/A'}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="font-medium text-gray-700">Molecular Weight:</span>
+                <span class="text-gray-900">${details.molecular_weight ? details.molecular_weight.toFixed(3) + ' g/mol' : 'N/A'}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="font-medium text-gray-700">Free Energy:</span>
+                <span class="text-gray-900">${details.free_energy ? details.free_energy.toFixed(6) + ' kcal/mol' : 'N/A'}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="font-medium text-gray-700">PubChem CID:</span>
+                <span class="text-gray-900">${details.pubchem_cid || 'N/A'}</span>
+              </div>
+            </div>
+          `;
+        } catch (error) {
+          console.error('Error loading molecule details:', error);
+          detailsContent.innerHTML = `<p class="text-red-500 text-sm">Failed to load molecule details</p>`;
+        }
+      }
+
+      // Populate dropdown (names/IDs)
+      async function populateDropdown() {
+        try {
+          const response = await fetch('/api/molecules');
+          const molecules = await response.json();
+          selectElement.innerHTML = '';
+
+          molecules.forEach(molecule => {
+            const option = document.createElement('option');
+            option.value = molecule.molecule_id;
+            option.textContent = molecule.molecule_name;
+            selectElement.appendChild(option);
+          });
+
+          selectElement.addEventListener('change', (event) => {
+            loadMolecule(event.target.value);
+          });
+
+          if (molecules.length > 0) {
+            selectElement.value = molecules[0].molecule_id;
+            loadMolecule(molecules[0].molecule_id);
+          }
+        } catch (error) {
+          console.error('Error fetching molecule list:', error);
+          selectElement.innerHTML = '<option>Failed to load list</option>';
+        }
+      }
+
+      // Initialize scatter chart (uses /api/molecules/chart)
+async function initChart() {
+  try {
+    const resp = await fetch('/api/molecules/chart');
+    const data = await resp.json();
+
+    chart = new Chart(chartCtx, {
+      type: 'scatter',
+      data: {
+        datasets: [{
+          label: 'Molecules',
+          data: data.map(m => ({
+            x: m.molecule_id,
+            y: m.free_energy,
+            name: m.molecule_name,
+            formula: m.molecular_formula
+          })),
+          backgroundColor: 'rgba(59, 130, 246, 0.7)'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            type: 'linear',
+            title: {
+              display: true,
+              text: 'Molecule ID'
+            },
+            ticks: {
+              autoSkip: false
             }
-
-            // --- Function to load molecule details ---
-            async function loadMoleculeDetails(moleculeId) {
-                try {
-                    const response = await fetch(`/api/molecule/${moleculeId}/details`);
-                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                    const details = await response.json();
-                    
-                    // Format the details for display
-                    detailsContent.innerHTML = `
-                        <div class="space-y-2">
-                            <div class="flex justify-between">
-                                <span class="font-medium text-gray-700">Name:</span>
-                                <span class="text-gray-900">${details.molecule_name}</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="font-medium text-gray-700">Formula:</span>
-                                <span class="text-gray-900 font-mono">${details.molecular_formula || 'N/A'}</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="font-medium text-gray-700">Molecular Weight:</span>
-                                <span class="text-gray-900">${details.molecular_weight ? details.molecular_weight.toFixed(3) + ' g/mol' : 'N/A'}</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="font-medium text-gray-700">Free Energy:</span>
-                                <span class="text-gray-900">${details.free_energy ? details.free_energy.toFixed(6) + ' kcal/mol' : 'N/A'}</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="font-medium text-gray-700">PubChem CID:</span>
-                                <span class="text-gray-900">${details.pubchem_cid || 'N/A'}</span>
-                            </div>
-                        </div>
-                    `;
-                } catch (error) {
-                    console.error('Error loading molecule details:', error);
-                    detailsContent.innerHTML = `<p class="text-red-500 text-sm">Failed to load molecule details</p>`;
-                }
+          },
+          y: {
+            title: {
+              display: true,
+              text: 'Free Energy (kcal/mol)'
             }
-
-            // --- Function to populate the dropdown with molecules ---
-            async function populateDropdown() {
-                try {
-                    const response = await fetch('/api/molecules');
-                    const molecules = await response.json();
-                    selectElement.innerHTML = ''; // Clear "Loading..."
-
-                    molecules.forEach(molecule => {
-                        const option = document.createElement('option');
-                        option.value = molecule.molecule_id;
-                        option.textContent = molecule.molecule_name;
-                        selectElement.appendChild(option);
-                    });
-
-                    selectElement.addEventListener('change', (event) => {
-                        loadMolecule(event.target.value);
-                    });
-
-                    if (molecules.length > 0) {
-                        selectElement.value = molecules[0].molecule_id;
-                        loadMolecule(molecules[0].molecule_id);
-                    }
-                } catch (error) {
-                    console.error('Error fetching molecule list:', error);
-                    selectElement.innerHTML = '<option>Failed to load list</option>';
-                }
+          }
+        },
+        plugins: {
+          tooltip: {
+            callbacks: {
+              label: (context) => {
+                const d = context.raw;
+                const energy = (typeof d.y === 'number') ? d.y.toFixed(6) : d.y;
+                return `ID ${d.x} • ΔG: ${energy} • ${d.formula} — ${d.name}`;
+              }
             }
+          },
+          legend: {
+            display: false
+          },
+          // 💡 The zoom plugin configuration is now correctly placed inside the plugins object.
+          zoom: {
+            pan: {
+              enabled: true,
+              mode: 'xy', // Pan along both x and y axes
+            },
+            zoom: {
+              wheel: {
+                enabled: true
+              }, // Zoom with mouse wheel
+              pinch: {
+                enabled: true
+              }, // Zoom with pinch gestures on mobile
+              mode: 'xy', // Zoom on both axes
+            }
+          }
+        }
+      }
+    });
+  } catch (e) {
+    console.error('Error initializing chart:', e);
+  }
+}
 
-            // Start the application
-            populateDropdown();
-        });
-    </script>
+
+      // Boot
+      populateDropdown();
+      initChart();
+    });
+  </script>
 </body>
 </html>
