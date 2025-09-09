@@ -31,7 +31,7 @@
         <div class="w-3/5 flex flex-col">
           <h3 class="text-lg font-semibold text-gray-900 mb-3 text-center">Free Energy Scatter (ID vs ΔG)</h3>
           <div class="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
-            <canvas id="moleculeChart" class="w-full" style="min-height:420px;"></canvas>
+            <canvas id="moleculeChart" class="w-full" style="min-height:720px;"></canvas>
           </div>
         </div>
 
@@ -197,7 +197,11 @@
                   type: 'linear',
                   title: {
                     display: true,
-                    text: 'Molecule ID'
+                    text: 'Molecule ID',
+                    font: {
+                        size: 16,
+                        weight: 'bold'
+                    }
                   },
                   ticks: {
                     autoSkip: false
@@ -206,7 +210,11 @@
                 y: {
                   title: {
                     display: true,
-                    text: 'Free Energy (kcal/mol)'
+                    text: 'Free Energy (kcal/mol)',
+                    font: {
+                        size: 16,
+                        weight: 'bold'
+                    }
                   }
                 }
               },
