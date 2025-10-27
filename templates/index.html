@@ -98,24 +98,30 @@
 
       <div class="flex-1 flex gap-6">
         <div class="w-3/5 flex flex-col">
-          <h3 class="text-lg font-semibold text-gray-900 mb-3 text-center">Free Energy Scatter (ID vs ΔG)</h3>
+          <!-- Chart section -->
 
-          <div class="plot-type-dropdown">
-    <!-- simple icon button (no external libs) -->
-    <button id="plotTypeBtn" class="icon-btn" aria-haspopup="true" aria-expanded="false" title="Choose plot type">
-      ⋯
-    </button>
+          <!-- Chart header with centered title & right-aligned dropdown -->
+          <div class="chart-header mb-3">
+            <div class="chart-title-container">
+              <h3 class="chart-title text-lg font-semibold text-gray-900">Free Energy Scatter (ID vs ΔG)</h3>
+            </div>
 
-    <ul id="plotTypeMenu" class="menu" role="menu" aria-labelledby="plotTypeBtn">
-      <li role="menuitem" data-plot="scatter">Scatter (current)</li>
-      <li role="menuitem" data-plot="line">Line</li>
-      <li role="menuitem" data-plot="bar">Bar</li>
-      <li role="menuitem" data-plot="pie">Pie</li>
-      <li role="menuitem" data-plot="hist">Histogram</li>
-      <li role="menuitem" data-plot="box">Box</li>
-      <li role="menuitem" data-plot="violin">Violin</li>
-    </ul>
-  </div>
+            <div class="plot-type-dropdown">
+              <button id="plotTypeBtn" class="icon-btn" aria-haspopup="true" aria-expanded="false" title="Choose plot type">
+                ⋯
+              </button>
+              <ul id="plotTypeMenu" class="menu" role="menu" aria-labelledby="plotTypeBtn">
+                <li role="menuitem" data-plot="scatter">Scatter (current)</li>
+                <li role="menuitem" data-plot="line">Line</li>
+                <li role="menuitem" data-plot="bar">Bar</li>
+                <li role="menuitem" data-plot="pie">Pie</li>
+                <li role="menuitem" data-plot="hist">Histogram</li>
+                <li role="menuitem" data-plot="box">Box</li>
+                <li role="menuitem" data-plot="violin">Violin</li>
+              </ul>
+            </div>
+          </div>
+
 
           <div class="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
             <canvas id="moleculeChart" class="w-full" style="min-height:720px;"></canvas>
