@@ -17,6 +17,75 @@
       min-height: 400px;
     }
   </style>
+  <style>
+.chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  position: relative;
+  width: 100%;
+}
+
+.chart-title-container {
+  flex: 1;
+  text-align: center;
+}
+
+.chart-title {
+  margin: 0;
+  font-weight: 600;
+}
+
+/* dropdown icon styling */
+.plot-type-dropdown {
+  position: relative;
+}
+
+.icon-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 22px;
+  line-height: 1;
+  padding: 4px 8px;
+  border-radius: 8px;
+}
+
+.icon-btn:hover {
+  background: #f0f2f5;
+}
+
+/* dropdown menu */
+.plot-type-dropdown .menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  min-width: 170px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.12);
+  padding: 6px 0;
+  display: none;
+  z-index: 1000;
+}
+
+.plot-type-dropdown .menu.show { display: block; }
+
+.plot-type-dropdown .menu li {
+  list-style: none;
+  padding: 8px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.plot-type-dropdown .menu li:hover {
+  background: #f6f7fb;
+}
+</style>
+
+
 </head>
 <body class="bg-gray-100 text-gray-800 flex justify-center min-h-screen">
   <div class="p-4 md:p-8 w-full">
@@ -30,6 +99,24 @@
       <div class="flex-1 flex gap-6">
         <div class="w-3/5 flex flex-col">
           <h3 class="text-lg font-semibold text-gray-900 mb-3 text-center">Free Energy Scatter (ID vs ΔG)</h3>
+
+          <div class="plot-type-dropdown">
+    <!-- simple icon button (no external libs) -->
+    <button id="plotTypeBtn" class="icon-btn" aria-haspopup="true" aria-expanded="false" title="Choose plot type">
+      ⋯
+    </button>
+
+    <ul id="plotTypeMenu" class="menu" role="menu" aria-labelledby="plotTypeBtn">
+      <li role="menuitem" data-plot="scatter">Scatter (current)</li>
+      <li role="menuitem" data-plot="line">Line</li>
+      <li role="menuitem" data-plot="bar">Bar</li>
+      <li role="menuitem" data-plot="pie">Pie</li>
+      <li role="menuitem" data-plot="hist">Histogram</li>
+      <li role="menuitem" data-plot="box">Box</li>
+      <li role="menuitem" data-plot="violin">Violin</li>
+    </ul>
+  </div>
+
           <div class="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
             <canvas id="moleculeChart" class="w-full" style="min-height:720px;"></canvas>
           </div>
@@ -273,5 +360,30 @@
       initChart();
     });
   </script>
+
+  <script>
+(function(){
+  const btn = document.getElementById('plotTypeBtn');
+  const menu = document.getElementById('plotTypeMenu');
+  if(!btn || !menu) return;
+
+  const toggle = () => {
+    const open = menu.classList.toggle('show');
+    btn.setAttribute('aria-expanded', open);
+  };
+
+  btn.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
+  document.addEventListener('click', () => { if(menu.classList.contains('show')) toggle(); });
+
+  // For now, just log the selection; you’ll wire this up later.
+  menu.addEventListener('click', (e) => {
+    const li = e.target.closest('li');
+    if(!li) return;
+    console.log('Selected plot type:', li.dataset.plot);
+    toggle();
+  });
+})();
+</script>
+
 </body>
 </html>
