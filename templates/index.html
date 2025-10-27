@@ -4,89 +4,21 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Interactive 3D Molecule Viewer</title>
+
+  <!-- Tailwind (UI) -->
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- JSmol (3D molecules) -->
   <script type="text/javascript" src="https://chemapps.stolaf.edu/jmol/jsmol/JSmol.min.js"></script>
+
+  <!-- Chart.js + zoom plugin -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
-  <style>
-    body { font-family: 'Inter', sans-serif; }
-    #viewer-container {
-      width: 100%;
-      height: 100%;
-      position: relative;
-      min-height: 400px;
-    }
-  </style>
-  <style>
-.chart-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-  position: relative;
-  width: 100%;
-}
 
-.chart-title-container {
-  flex: 1;
-  text-align: center;
-}
-
-.chart-title {
-  margin: 0;
-  font-weight: 600;
-}
-
-/* dropdown icon styling */
-.plot-type-dropdown {
-  position: relative;
-}
-
-.icon-btn {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  font-size: 22px;
-  line-height: 1;
-  padding: 4px 8px;
-  border-radius: 8px;
-}
-
-.icon-btn:hover {
-  background: #f0f2f5;
-}
-
-/* dropdown menu */
-.plot-type-dropdown .menu {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 6px);
-  min-width: 170px;
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0,0,0,.12);
-  padding: 6px 0;
-  display: none;
-  z-index: 1000;
-}
-
-.plot-type-dropdown .menu.show { display: block; }
-
-.plot-type-dropdown .menu li {
-  list-style: none;
-  padding: 8px 12px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.plot-type-dropdown .menu li:hover {
-  background: #f6f7fb;
-}
-</style>
-
-
+  <!-- App styles -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
+
 <body class="bg-gray-100 text-gray-800 flex justify-center min-h-screen">
   <div class="p-4 md:p-8 w-full">
     <div class="bg-white rounded-xl shadow-lg p-6 md:p-8 flex flex-col min-h-screen pb-16">
@@ -97,37 +29,30 @@
       </div>
 
       <div class="flex-1 flex gap-6">
+        <!-- LEFT: Chart -->
         <div class="w-3/5 flex flex-col">
-          <!-- Chart section -->
-
-          <!-- Chart header with centered title & right-aligned dropdown -->
           <div class="chart-header mb-3">
             <div class="chart-title-container">
-              <h3 class="chart-title text-lg font-semibold text-gray-900">Free Energy Scatter (ID vs ΔG)</h3>
+              <h3 class="chart-title text-lg font-semibold text-gray-900">
+                Free Energy Scatter (ID vs ΔG)
+              </h3>
             </div>
-
             <div class="plot-type-dropdown">
-              <button id="plotTypeBtn" class="icon-btn" aria-haspopup="true" aria-expanded="false" title="Choose plot type">
-                ⋯
-              </button>
+              <button id="plotTypeBtn" class="icon-btn" aria-haspopup="true" aria-expanded="false" title="Choose plot type">⋯</button>
               <ul id="plotTypeMenu" class="menu" role="menu" aria-labelledby="plotTypeBtn">
-                <li role="menuitem" data-plot="scatter">Scatter (current)</li>
-                <li role="menuitem" data-plot="line">Line</li>
+                <li role="menuitem" data-plot="scatter">Scatter</li>
                 <li role="menuitem" data-plot="bar">Bar</li>
-                <li role="menuitem" data-plot="pie">Pie</li>
-                <li role="menuitem" data-plot="hist">Histogram</li>
-                <li role="menuitem" data-plot="box">Box</li>
-                <li role="menuitem" data-plot="violin">Violin</li>
+                <!-- You can add more items later: line, hist, etc. -->
               </ul>
             </div>
           </div>
-
 
           <div class="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
             <canvas id="moleculeChart" class="w-full" style="min-height:720px;"></canvas>
           </div>
         </div>
 
+        <!-- RIGHT: Viewer + details -->
         <div class="w-2/5 flex flex-col">
           <div class="mb-4 flex flex-col items-center">
             <label for="molecule-select" class="block text-sm font-medium text-gray-700 mb-2">Choose a Molecule:</label>
@@ -136,8 +61,7 @@
             </select>
           </div>
 
-          <div id="viewer-container" class="bg-gray-900 rounded-lg border border-gray-200 shadow-inner" style="aspect-ratio: 1 / 1;">
-          </div>
+          <div id="viewer-container" class="bg-gray-900 rounded-lg border border-gray-200 shadow-inner" style="aspect-ratio: 1 / 1;"></div>
 
           <div id="molecule-details" class="mt-8 bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
             <h3 class="text-lg font-semibold text-gray-900 mb-3">Molecule Details</h3>
@@ -151,245 +75,7 @@
     </div>
   </div>
 
-  <script>
-    // JSmol config
-    var Info = {
-      width: "100%",
-      height: "100%",
-      color: "#111827",
-      use: "HTML5",
-      j2sPath: "https://chemapps.stolaf.edu/jmol/jsmol/j2s",
-      serverURL: "https://chemapps.stolaf.edu/jmol/jsmol/php/jsmol.php",
-      disableJ2SLoadMonitor: true,
-      disableInitialConsole: true,
-      readyFunction: null 
-    };
-
-    document.addEventListener('DOMContentLoaded', () => {
-      const selectElement = document.getElementById('molecule-select');
-      const viewerContainer = document.getElementById('viewer-container');
-      const detailsContent = document.getElementById('details-content');
-      const chartCtx = document.getElementById('moleculeChart').getContext('2d');
-
-      let jmolApplet = null;
-      let chart = null;
-
-      // Load molecule into JSmol
-      async function loadMolecule(moleculeId) {
-        if (!moleculeId) return;
-
-        if (jmolApplet === null) {
-          viewerContainer.innerHTML = "";
-          jmolApplet = Jmol.getApplet("jmolApplet0", Info);
-          viewerContainer.innerHTML = Jmol.getAppletHtml(jmolApplet);
-        }
-
-        try {
-          const response = await fetch(`/api/molecule/${moleculeId}`);
-          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-          const xyzData = await response.text();
-          const scriptCommand = `load inline "${xyzData}"`;
-          Jmol.script(jmolApplet, scriptCommand);
-          await loadMoleculeDetails(moleculeId);
-        } catch (error) {
-          console.error('Error loading molecule:', error);
-          viewerContainer.innerHTML = `<p class="text-red-400 text-center p-8">Failed to load molecule. See console for details.</p>`;
-        }
-      }
-
-      // Load molecule details panel
-      async function loadMoleculeDetails(moleculeId) {
-        try {
-          const response = await fetch(`/api/molecule/${moleculeId}/details`);
-          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-          const details = await response.json();
-
-          detailsContent.innerHTML = `
-            <div class="space-y-2">
-              <div class="flex justify-between">
-                <span class="font-medium text-gray-700">Name:</span>
-                <span class="text-gray-900">${details.molecule_name}</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="font-medium text-gray-700">Formula:</span>
-                <span class="text-gray-900 font-mono">${details.molecular_formula || 'N/A'}</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="font-medium text-gray-700">Molecular Weight:</span>
-                <span class="text-gray-900">${details.molecular_weight ? details.molecular_weight.toFixed(3) + ' g/mol' : 'N/A'}</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="font-medium text-gray-700">Free Energy:</span>
-                <span class="text-gray-900">${details.free_energy ? details.free_energy.toFixed(6) + ' kcal/mol' : 'N/A'}</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="font-medium text-gray-700">PubChem CID:</span>
-                <span class="text-gray-900">${details.pubchem_cid || 'N/A'}</span>
-              </div>
-            </div>
-          `;
-        } catch (error) {
-          console.error('Error loading molecule details:', error);
-          detailsContent.innerHTML = `<p class="text-red-500 text-sm">Failed to load molecule details</p>`;
-        }
-      }
-
-      // Populate dropdown (names/IDs)
-      async function populateDropdown() {
-        try {
-          const response = await fetch('/api/molecules');
-          const molecules = await response.json();
-          selectElement.innerHTML = '';
-
-          molecules.forEach(molecule => {
-            const option = document.createElement('option');
-            option.value = molecule.molecule_id;
-            option.textContent = molecule.molecule_name;
-            selectElement.appendChild(option);
-          });
-
-          selectElement.addEventListener('change', (event) => {
-            loadMolecule(event.target.value);
-          });
-
-          if (molecules.length > 0) {
-            selectElement.value = molecules[0].molecule_id;
-            loadMolecule(molecules[0].molecule_id);
-          }
-        } catch (error) {
-          console.error('Error fetching molecule list:', error);
-          selectElement.innerHTML = '<option>Failed to load list</option>';
-        }
-      }
-
-      // Initialize scatter chart (uses /api/molecules/chart)
-      async function initChart() {
-        try {
-          const resp = await fetch('/api/molecules/chart');
-          const data = await resp.json();
-
-          chart = new Chart(chartCtx, {
-            type: 'scatter',
-            data: {
-              datasets: [{
-                label: 'Molecules',
-                data: data.map(m => ({
-                  x: m.molecule_id,
-                  y: m.free_energy,
-                  name: m.molecule_name,
-                  formula: m.molecular_formula
-                })),
-                backgroundColor: 'rgba(59, 130, 246, 0.7)'
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              scales: {
-                x: {
-                  type: 'linear',
-                  title: {
-                    display: true,
-                    text: 'Molecule ID',
-                    font: {
-                        size: 16,
-                        weight: 'bold'
-                    }
-                  },
-                  ticks: {
-                    autoSkip: false
-                  }
-                },
-                y: {
-                  title: {
-                    display: true,
-                    text: 'Free Energy (kcal/mol)',
-                    font: {
-                        size: 16,
-                        weight: 'bold'
-                    }
-                  }
-                }
-              },
-              plugins: {
-                tooltip: {
-                  callbacks: {
-                    label: (context) => {
-                      const d = context.raw;
-                      const energy = (typeof d.y === 'number') ? d.y.toFixed(6) : d.y;
-                      return `ID ${d.x} • ΔG: ${energy} • ${d.formula} — ${d.name}`;
-                    }
-                  }
-                },
-                legend: {
-                  display: false
-                },
-                zoom: {
-                  pan: {
-                    enabled: true,
-                    mode: 'xy',
-                  },
-                  zoom: {
-                    wheel: {
-                      enabled: true
-                    },
-                    pinch: {
-                      enabled: true
-                    },
-                    mode: 'xy',
-                  }
-                }
-              },
-              // The new onClick handler to connect the chart to the dropdown.
-              onClick: (e) => {
-                const points = chart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, true);
-                if (points.length) {
-                  const firstPoint = points[0];
-                  const dataIndex = firstPoint.index;
-                  const moleculeData = chart.data.datasets[0].data[dataIndex];
-                  const moleculeId = moleculeData.x;
-                  
-                  // Update dropdown and load molecule
-                  selectElement.value = moleculeId;
-                  loadMolecule(moleculeId);
-                }
-              }
-            }
-          });
-        } catch (e) {
-          console.error('Error initializing chart:', e);
-        }
-      }
-
-      // Boot
-      populateDropdown();
-      initChart();
-    });
-  </script>
-
-  <script>
-(function(){
-  const btn = document.getElementById('plotTypeBtn');
-  const menu = document.getElementById('plotTypeMenu');
-  if(!btn || !menu) return;
-
-  const toggle = () => {
-    const open = menu.classList.toggle('show');
-    btn.setAttribute('aria-expanded', open);
-  };
-
-  btn.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
-  document.addEventListener('click', () => { if(menu.classList.contains('show')) toggle(); });
-
-  // For now, just log the selection; you’ll wire this up later.
-  menu.addEventListener('click', (e) => {
-    const li = e.target.closest('li');
-    if(!li) return;
-    console.log('Selected plot type:', li.dataset.plot);
-    toggle();
-  });
-})();
-</script>
-
+  <!-- App bootstrapping (ES modules) -->
+  <script type="module" src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>
